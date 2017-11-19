@@ -16,8 +16,7 @@ public class ActionManager {
 	private int actionIndex;
 
 	public ActionManager() {
-		actions = new ArrayList<Action>();
-		actionIndex = -1;
+		clear();
 	}
 
 	public void redo() {
@@ -41,5 +40,10 @@ public class ActionManager {
 		actions.add(action);
 		action.execute();
 		actionIndex++;
+	}
+	
+	public void clear() {
+		actions = new ArrayList<Action>();
+		actionIndex = -1;
 	}
 }

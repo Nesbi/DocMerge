@@ -100,7 +100,13 @@ public class JavaFXGUI extends Application {
 		redoBtn.setText("Redo action");
 		redoBtn.setOnAction(e -> actions.redo());
 		menuEdit.getItems().add(redoBtn);
-
+		
+		// Clear
+		final MenuItem clearBtn = new MenuItem();
+		clearBtn.setText("Clear");
+		clearBtn.setOnAction(e -> clear());
+		menuEdit.getItems().add(clearBtn);
+		
 		// Display everything
 		Scene mainScene = new Scene(root, 800, 700);
 		mainScene.getStylesheets().add("main.css");
@@ -227,6 +233,13 @@ public class JavaFXGUI extends Application {
 				ex.printStackTrace();
 			}
 		}
+	}
+	
+	public void clear() {
+		documentSideBar.getChildren().clear();
+		mainView.getChildren().clear();
+		document = new PDFDocument();
+		actions.clear();
 	}
 
 }

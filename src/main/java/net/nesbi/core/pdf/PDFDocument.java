@@ -20,14 +20,10 @@ public class PDFDocument {
 		addPages(document);
 	}
 
-	public PDFDocument(List<PDFPage> pages) {
-		this.pages = new LinkedList<PDFPage>(pages);
+	public PDFDocument() {
+		this.pages = new LinkedList<PDFPage>();
 	}
 
-	public PDFDocument() {
-		this(new LinkedList<PDFPage>());
-	}
-	
 	public void addPages(PDDocument document) {
 		for (PDPage pdPage : document.getPages()) {
 			pages.addLast(new PDFPage(document, pdPage));
