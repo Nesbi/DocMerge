@@ -197,12 +197,12 @@ public class JavaFXGUI extends Application {
 	}
 
 	private void saveDocument() {
-		fileChooser.setTitle("Add PDF document");
-		fileChooser.setInitialFileName("");
-		File file = fileChooser.showOpenDialog(null);
+		fileChooser.setTitle("Save PDF document");
+		fileChooser.setInitialFileName("document.pdf");
+		File file = fileChooser.showSaveDialog(null);
 		if (file != null) {
 			try {
-				loadDocument(file);
+				DataManager.savePDF(file, document);
 			} catch (IOException ex) {
 				// TODO Auto-generated catch block
 				ex.printStackTrace();
