@@ -30,8 +30,7 @@ import net.nesbi.fx.actions.ActionAddDocument;
 import net.nesbi.fx.actions.ActionHideFXPage;
 
 /**
- * JavaFX gui for docmerge
- * Displays the pdf documents and handles user input
+ * JavaFX gui for docmerge Displays the pdf documents and handles user input
  *
  */
 public class JavaFXGUI extends Application {
@@ -43,6 +42,7 @@ public class JavaFXGUI extends Application {
 	private VBox mainView;
 	private ScrollPane mainScrollPane;
 	private final FileChooser fileChooser = new FileChooser();
+	private File lastOpened;
 
 	public static void main(String[] args) throws IOException {
 		Application.launch(JavaFXGUI.class);
@@ -78,8 +78,6 @@ public class JavaFXGUI extends Application {
 
 		root.setTop(menu);
 
-		fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
 		// Load Button
 		final MenuItem loadBtn = new MenuItem();
 		loadBtn.setText("Add PDF");
@@ -105,7 +103,6 @@ public class JavaFXGUI extends Application {
 
 		// Display everything
 		Scene mainScene = new Scene(root, 800, 700);
-		System.err.println(getClass().getClassLoader().toString());
 		mainScene.getStylesheets().add("main.css");
 		primaryStage.setScene(mainScene);
 		primaryStage.centerOnScreen();
@@ -213,11 +210,18 @@ public class JavaFXGUI extends Application {
 
 	private void openDocument() {
 		fileChooser.setTitle("Add PDF document");
+		if (lastOpened == null) {
+			fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+		}else {
+			fileChooser.setInitialDirectory(lastOpened);
+		}
+		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
 		fileChooser.setInitialFileName("");
 		File file = fileChooser.showOpenDialog(null);
 		if (file != null) {
 			try {
 				loadDocument(file);
+				lastOpened = file.getParentFile();
 			} catch (IOException ex) {
 				// TODO Auto-generated catch block
 				ex.printStackTrace();
