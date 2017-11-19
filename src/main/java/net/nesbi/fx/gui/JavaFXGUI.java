@@ -66,6 +66,7 @@ public class JavaFXGUI extends Application {
 		mainView.getStyleClass().add("mainView");
 		mainScrollPane = new ScrollPane();
 		mainScrollPane.setContent(mainView);
+		mainScrollPane.setFitToWidth(true);
 		root.setCenter(mainScrollPane);
 
 		// Menu

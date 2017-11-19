@@ -6,10 +6,12 @@
    -fx-opacity: 0.5; 
    -fx-padding: 0px;
    -fx-margin: 0px;
+   -fx-alignment: center;
 }
 .pageImage:selected{
     -fx-opacity: 1;
 }
 .mainView, .sidebar{ 
     -fx-spacing: 5;
+    -fx-alignment: center;
 }
