@@ -7,19 +7,29 @@ import net.nesbi.core.pdf.PDFPage;
  * Revocable action to hide a page in a PDFDocument
  *
  */
-public class ActionHidePage implements Action{
+public class ActionHidePage implements Action {
 
 	private boolean isExecuted = false;
 	private PDFPage page;
+	private boolean invert;
 
 	public ActionHidePage(PDFDocument document, int pageIndex) {
-		this.page = document.getPages().get(pageIndex);
+		this(document,pageIndex,false);
 	}
-	
+
+	public ActionHidePage(PDFDocument document, int pageIndex, boolean invert) {
+		this.page = document.getPages().get(pageIndex);
+		this.invert = invert;
+	}
+
 	@Override
 	public void execute() {
 		if (!isExecuted) {
-			page.hide();
+			if (invert) {
+				page.display();
+			} else {
+				page.hide();
+			}
 			isExecuted = true;
 		}
 	}
@@ -27,8 +37,12 @@ public class ActionHidePage implements Action{
 	@Override
 	public void revoke() {
 		if (isExecuted) {
-			page.display();
+			if (invert) {
+				page.hide();
+			} else {
+				page.display();
+			}
 			isExecuted = false;
-		}		
+		}
 	}
 }

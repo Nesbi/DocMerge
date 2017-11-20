@@ -16,10 +16,16 @@ public class ActionHideFXPage implements Action {
 	private boolean isExecuted = false;
 	private ActionHidePage hidePage;
 	private ToggleButton pageToggle;
+	private boolean invert;
 
 	public ActionHideFXPage(PDFDocument document, int pageIndex, ToggleButton pageToggle) {
-		this.hidePage = new ActionHidePage(document, pageIndex);
+		this(document, pageIndex, pageToggle, false);
+	}
+
+	public ActionHideFXPage(PDFDocument document, int pageIndex, ToggleButton pageToggle, boolean invert) {
+		this.hidePage = new ActionHidePage(document, pageIndex, invert);
 		this.pageToggle = pageToggle;
+		this.invert = invert;
 	}
 
 	@Override
@@ -30,10 +36,13 @@ public class ActionHideFXPage implements Action {
 			// Prevent that the event fires twice
 			EventHandler<ActionEvent> event = pageToggle.getOnAction();
 			pageToggle.setOnAction(null);
-			pageToggle.setSelected(false);
-
+			if (invert) {
+				pageToggle.setSelected(true);
+			} else {
+				pageToggle.setSelected(false);
+			}
 			pageToggle.setOnAction(event);
-			
+
 			isExecuted = true;
 		}
 	}
@@ -42,12 +51,15 @@ public class ActionHideFXPage implements Action {
 	public void revoke() {
 		if (isExecuted) {
 			hidePage.revoke();
-			
+
 			// Prevent that the event fires twice
 			EventHandler<ActionEvent> event = pageToggle.getOnAction();
 			pageToggle.setOnAction(null);
-			pageToggle.setSelected(true);
-
+			if (invert) {
+				pageToggle.setSelected(false);
+			} else {
+				pageToggle.setSelected(true);
+			}
 			pageToggle.setOnAction(event);
 			isExecuted = false;
 		}

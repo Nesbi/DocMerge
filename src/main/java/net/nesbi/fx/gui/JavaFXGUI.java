@@ -181,12 +181,11 @@ public class JavaFXGUI extends Application {
 		pageToggle.setSelected(true);
 		pageToggle.getStyleClass().add("pageImage");
 
-		final ActionHideFXPage hidePage = new ActionHideFXPage(document, pageID, pageToggle);
 		pageToggle.setOnAction(e -> {
 			if (!pageToggle.isSelected()) {
-				actions.addAndExecute(hidePage);
+				actions.addAndExecute(new ActionHideFXPage(document, pageID, pageToggle));
 			}else {
-				hidePage.revoke();
+				actions.addAndExecute(new ActionHideFXPage(document, pageID, pageToggle, true));
 			}
 		});
 		mainView.getChildren().add(pageToggle);
