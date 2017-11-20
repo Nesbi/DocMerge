@@ -56,4 +56,8 @@ public class PDFDocument {
 	public LinkedList<PDFPage> getPages() {
 		return pages;
 	}
+	
+	public int getNumberOfPages() {
+		return pages.size();
+	}
 }

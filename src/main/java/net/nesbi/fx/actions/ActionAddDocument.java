@@ -27,12 +27,14 @@ public class ActionAddDocument implements Action {
 	private List<ToggleButton> pageDisplays;
 
 	private Action addPages;
-	private int documentSize;
+	private int newDocumentSize;
+	private int oldDocumentSize;
 
 	public ActionAddDocument(PDFDocument mainDocument, PDDocument newDocument, JavaFXGUI gui) {
 		this.addPages = new ActionAddPages(mainDocument, newDocument);
 		this.renderer = new PDFRenderer(newDocument);
-		this.documentSize = newDocument.getNumberOfPages();
+		this.newDocumentSize = newDocument.getNumberOfPages();
+		this.oldDocumentSize = mainDocument.getNumberOfPages();
 		this.gui = gui;
 	}
 
@@ -41,13 +43,14 @@ public class ActionAddDocument implements Action {
 		if (!isExecuted) {
 			addPages.execute();
 
-			if (documentSize > 0) {
+			if (newDocumentSize > 0) {
 				// Document pages
 				if (pageDisplays == null) {
 					pageDisplays = new LinkedList<ToggleButton>();
-					for (int pageID = 0; pageID < documentSize; pageID++) {
+					
+					for (int pageID = 0; pageID < newDocumentSize; pageID++) {
 						try {
-							pageDisplays.add(gui.addPageImage(renderer.renderImage(pageID), pageID));
+							pageDisplays.add(gui.addPageImage(renderer.renderImage(pageID), pageID+oldDocumentSize));
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -81,7 +84,7 @@ public class ActionAddDocument implements Action {
 		if (isExecuted) {
 			addPages.revoke();
 
-			if (documentSize > 0) {
+			if (newDocumentSize > 0) {
 				// Document icon
 				if (documentIcon != null) {
 					gui.removeDocumentIcon(documentIcon);
@@ -89,7 +92,7 @@ public class ActionAddDocument implements Action {
 
 				// Document pages
 				if (pageDisplays != null) {
-					for (int pageID = 0; pageID < documentSize; pageID++) {
+					for (int pageID = oldDocumentSize; pageID < newDocumentSize+oldDocumentSize; pageID++) {
 						gui.removePageImage(pageDisplays.get(pageID));
 					}
 				}
