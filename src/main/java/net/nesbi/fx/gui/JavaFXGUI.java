@@ -23,6 +23,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
 import net.nesbi.core.manager.ActionManager;
 import net.nesbi.core.manager.DataManager;
 import net.nesbi.core.pdf.PDFDocument;
@@ -56,6 +57,8 @@ public class JavaFXGUI extends Application {
 		// Main View
 		primaryStage.setTitle("DocMerge");
 		root = new BorderPane();
+		Image applicationIcon = new Image(getClass().getResourceAsStream("/icon_128x128.png"));
+        primaryStage.getIcons().add(applicationIcon);
 		documentSideBar = new VBox();
 		documentSideBar.getStyleClass().add("sidebar");
 		final ScrollPane sideBarScroll = new ScrollPane();
