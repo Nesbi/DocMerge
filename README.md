@@ -1,6 +1,11 @@
 # DocMerge
 Simple application to visually merge PDF documents
 
+Append documents and discard unwanted pages.
+
+![example_crop](https://user-images.githubusercontent.com/23743591/33561412-e17809ea-d912-11e7-8b0e-0d6a195e95c4.png)
+
+
 ## Run Requirements
 * Java 8 or higher
 
