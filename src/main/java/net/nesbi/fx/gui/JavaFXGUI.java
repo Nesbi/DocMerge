@@ -5,14 +5,17 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 
 import javafx.application.Application;
+import javafx.concurrent.Task;
 import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.ImageView;
@@ -24,6 +27,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
+import javafx.application.Platform;
 import net.nesbi.core.manager.ActionManager;
 import net.nesbi.core.manager.DataManager;
 import net.nesbi.core.pdf.PDFDocument;
@@ -45,6 +49,11 @@ public class JavaFXGUI extends Application {
 	private final FileChooser fileChooser = new FileChooser();
 	private File lastOpened;
 
+	private ProgressBar progressBar;
+	private int maxProgress;
+	private int progress;
+	private boolean inProgress = false;
+
 	public static void main(String[] args) throws IOException {
 		Application.launch(JavaFXGUI.class);
 	}
@@ -58,12 +67,13 @@ public class JavaFXGUI extends Application {
 		primaryStage.setTitle("DocMerge");
 		root = new BorderPane();
 		Image applicationIcon = new Image(getClass().getResourceAsStream("/icon_128x128.png"));
-        primaryStage.getIcons().add(applicationIcon);
+		primaryStage.getIcons().add(applicationIcon);
 		documentSideBar = new VBox();
 		documentSideBar.getStyleClass().add("sidebar");
 		final ScrollPane sideBarScroll = new ScrollPane();
 		sideBarScroll.setContent(documentSideBar);
 		root.setLeft(sideBarScroll);
+		progressBar = new ProgressBar(0);
 
 		mainView = new VBox();
 		mainView.getStyleClass().add("mainView");
@@ -103,13 +113,13 @@ public class JavaFXGUI extends Application {
 		redoBtn.setText("Redo action");
 		redoBtn.setOnAction(e -> actions.redo());
 		menuEdit.getItems().add(redoBtn);
-		
+
 		// Clear
 		final MenuItem clearBtn = new MenuItem();
 		clearBtn.setText("Clear");
 		clearBtn.setOnAction(e -> clear());
 		menuEdit.getItems().add(clearBtn);
-		
+
 		// Display everything
 		Scene mainScene = new Scene(root, 800, 700);
 		mainScene.getStylesheets().add("main.css");
@@ -140,7 +150,9 @@ public class JavaFXGUI extends Application {
 	}
 
 	public Button addDocumentIcon(Button documentIcon) {
-		documentSideBar.getChildren().add(documentIcon);
+		Platform.runLater(() -> {
+			documentSideBar.getChildren().add(documentIcon);
+		});
 		documentIcon.getStyleClass().add("documentIcon");
 		return documentIcon;
 	}
@@ -159,17 +171,22 @@ public class JavaFXGUI extends Application {
 			Bounds bounds = mainScrollPane.getViewportBounds();
 			mainScrollPane.setVvalue(firstImage.getLayoutY() * (1 / (mainView.getHeight() - bounds.getHeight())));
 		});
-
-		documentSideBar.getChildren().add(documentButton);
+		Platform.runLater(() -> {
+			documentSideBar.getChildren().add(documentButton);
+		});
 		return documentButton;
 	}
 
 	public void removeDocumentIcon(Button documentIcon) {
-		documentSideBar.getChildren().remove(documentIcon);
+		Platform.runLater(() -> {
+			documentSideBar.getChildren().remove(documentIcon);
+		});
 	}
 
 	public ToggleButton addPageImage(ToggleButton toggleButton) {
-		mainView.getChildren().add(toggleButton);
+		Platform.runLater(() -> {
+			mainView.getChildren().add(toggleButton);
+		});
 		toggleButton.getStyleClass().add("pageImage");
 		return toggleButton;
 	}
@@ -187,58 +204,94 @@ public class JavaFXGUI extends Application {
 		pageToggle.setOnAction(e -> {
 			if (!pageToggle.isSelected()) {
 				actions.addAndExecute(new ActionHideFXPage(document, pageID, pageToggle));
-			}else {
+			} else {
 				actions.addAndExecute(new ActionHideFXPage(document, pageID, pageToggle, true));
 			}
 		});
-		mainView.getChildren().add(pageToggle);
+		Platform.runLater(() -> {
+			mainView.getChildren().add(pageToggle);
+			addToProgress(1);
+		});
 		return pageToggle;
 	}
 
 	public void removePageImage(ToggleButton documentIcon) {
-		mainView.getChildren().remove(documentIcon);
+		Platform.runLater(() -> {
+			mainView.getChildren().remove(documentIcon);
+		});
 	}
 
 	private void loadDocument(File file) throws IOException {
-		PDDocument pdDocument = DataManager.loadPDF(file);
-		actions.addAndExecute(new ActionAddDocument(document, pdDocument, this));
+		if (!inProgress) {
+			this.inProgress = true;
+			documentSideBar.getChildren().add(progressBar);
+			progressBar.setProgress(0.0);
+			PDDocument pdDocument = DataManager.loadPDF(file);
+			setProgressMax(pdDocument.getNumberOfPages() * 3);
+			addToProgress(pdDocument.getNumberOfPages());
+
+			final JavaFXGUI gui = this;
+			final Task loadingTask = new Task<Void>() {
+
+				@Override
+				protected Void call() throws Exception {
+					try {
+						actions.addAndExecute(new ActionAddDocument(document, pdDocument, gui));
+						Platform.runLater(() -> {
+							documentSideBar.getChildren().remove(progressBar);
+							inProgress = false;
+						});
+					} catch (Exception e) {
+						System.out.println(e.toString());
+					}
+					return null;
+				}
+			};
+			Thread th = new Thread(loadingTask);
+			th.setDaemon(true);
+			th.start();
+		}
 	}
 
 	private void saveDocument() {
-		fileChooser.setTitle("Save PDF document");
-		fileChooser.setInitialFileName("document.pdf");
-		File file = fileChooser.showSaveDialog(null);
-		if (file != null) {
-			try {
-				DataManager.savePDF(file, document);
-			} catch (IOException ex) {
-				// TODO Auto-generated catch block
-				ex.printStackTrace();
+		if (!inProgress) {
+			fileChooser.setTitle("Save PDF document");
+			fileChooser.setInitialFileName("document.pdf");
+			File file = fileChooser.showSaveDialog(null);
+			if (file != null) {
+				try {
+					DataManager.savePDF(file, document);
+				} catch (IOException ex) {
+					// TODO Auto-generated catch block
+					ex.printStackTrace();
+				}
 			}
 		}
 	}
 
 	private void openDocument() {
-		fileChooser.setTitle("Add PDF document");
-		if (lastOpened == null) {
-			fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-		}else {
-			fileChooser.setInitialDirectory(lastOpened);
-		}
-		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
-		fileChooser.setInitialFileName("");
-		File file = fileChooser.showOpenDialog(null);
-		if (file != null) {
-			try {
-				loadDocument(file);
-				lastOpened = file.getParentFile();
-			} catch (IOException ex) {
-				// TODO Auto-generated catch block
-				ex.printStackTrace();
+		if (!inProgress) {
+			fileChooser.setTitle("Add PDF document");
+			if (lastOpened == null) {
+				fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+			} else {
+				fileChooser.setInitialDirectory(lastOpened);
+			}
+			fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
+			fileChooser.setInitialFileName("");
+			File file = fileChooser.showOpenDialog(null);
+			if (file != null) {
+				try {
+					loadDocument(file);
+					lastOpened = file.getParentFile();
+				} catch (IOException ex) {
+					// TODO Auto-generated catch block
+					ex.printStackTrace();
+				}
 			}
 		}
 	}
-	
+
 	public void clear() {
 		documentSideBar.getChildren().clear();
 		mainView.getChildren().clear();
@@ -246,4 +299,13 @@ public class JavaFXGUI extends Application {
 		actions.clear();
 	}
 
+	public void setProgressMax(int max) {
+		this.maxProgress = max;
+	}
+
+	public void addToProgress(int progress) {
+		this.progress += progress;
+		this.progress = (this.progress > maxProgress) ? maxProgress : this.progress;
+		this.progressBar.setProgress((this.progress * 1.0) / maxProgress);
+	}
 }

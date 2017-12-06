@@ -55,7 +55,6 @@ public class ActionAddDocument implements Action {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-
 					}
 				} else {
 					for(ToggleButton page : pageDisplays) {
